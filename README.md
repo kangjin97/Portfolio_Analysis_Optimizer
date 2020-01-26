@@ -16,3 +16,12 @@ User-created Functions:
 2. calculate() - Makes use of algorithm to calculate annual returns and standard deviation (NOTE: this is a static method)
    
 This is an experimental version and we should use it to consult Dr. Z to gain more insight. 
+
+HOW TO RUN:
+
+1. Run portfolio1.py on an IDE or from command prompt 
+2. Input ticker symbol (I.E. GOOGL) and percentage (I.E. 0.5) of each share in designated columns
+3. Adjust Time Period with Start Date and End Date
+4. Hit Calculate! 
+
+portfolio1.py is not designed to handle any errors!
