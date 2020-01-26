@@ -11,7 +11,7 @@ NOTE: YOU MUST BE IN SAME DIRECTORY AS UI FILE FOR IT TO WORK!
 portfolio1.py makes use of object oriented programming! 
   
   User-created Functions:
-    pushButton1(self) - pushes the calculate button to run calculate() function 
-    calculate() - Makes use of algorithm to calculate annual returns and standard deviation (NOTE: this is a static method)
+    1. pushButton1(self) - pushes the calculate button to run calculate() function \n
+    2. calculate() - Makes use of algorithm to calculate annual returns and standard deviation (NOTE: this is a static method) \n
    
 This is an experimental version and we should use it to consult Dr. Z to gain more insight. 
