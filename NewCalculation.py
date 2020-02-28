@@ -5,6 +5,8 @@ import xlrd
 import datetime
 import math
 
+
+
 time_frame = 10
 risk_free_rate = 0.0152
 portfolio_ticker = ['ACN', 'DIS', 'COST', 'INTC', 'JPM',	'V', 'XOM', 'JNJ', 'BSX', 'CPB']
@@ -101,6 +103,7 @@ def processData(timeFrame, RFR, ticker, filename):
             else:
                 new_col.append(np.nan)
         adv_cov_matrix[portfolio_ticker[col]] = new_col
+    print(adv_cov_matrix)
 
 
     #find stocks weight^2 and Std_Dev^2
