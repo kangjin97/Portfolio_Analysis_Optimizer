@@ -103,7 +103,6 @@ def processData(timeFrame, RFR, ticker, filename):
             else:
                 new_col.append(np.nan)
         adv_cov_matrix[portfolio_ticker[col]] = new_col
-    print(adv_cov_matrix)
 
 
     #find stocks weight^2 and Std_Dev^2

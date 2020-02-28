@@ -14,6 +14,7 @@ def extractData(stocks, start, end):
             error = f"Ticker Symbol {symbol} cannot be found"
             print(error)
 
+    data = data.asfreq('M', method='pad')
     print(data)
 
 
