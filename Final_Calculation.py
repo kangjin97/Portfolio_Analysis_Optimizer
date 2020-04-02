@@ -1,9 +1,5 @@
 import numpy as np
-# import pandas as pd
-# import scipy.optimize as sco
 import matplotlib.pyplot as plt
-# import seaborn as sns
-
 import pandas_datareader.data as web
 import pandas as pd
 
@@ -158,7 +154,7 @@ def simulate_ef_random(mean_returns, cov_matrix, num_portfolios, risk_free_rate)
     plt.figure(figsize=(10, 7))
 
     # x = volatility, y = annualized return, color mapping = sharpe ratio
-    plt.scatter(results[0, :], results[1, :], c=results[2, :], cmap='YlGnBu', marker='o', s=10, alpha=0.3)
+    plt.scatter(results[:, 0], results[:, 1], c=results[:, 2], cmap='YlGnBu', marker='o', s=10, alpha=0.3)
     plt.colorbar()
     plt.scatter(sdp, rp, marker='*', color='r', s=500, label='Maximum Sharpe ratio')
     plt.scatter(sdp_min, rp_min, marker='*', color='g', s=500, label='Minimum volatility')
