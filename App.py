@@ -72,6 +72,56 @@ class Root(Tk):
 
         return simulate_ef_random(mean_returns, cov_matrix, num_portfolios, risk_free_rate, self.progress_bar)
 
+    def calculateResults(self):
+        # Input validation
+        if self.validateDates() and self.validateAssets():
+            f, outputString = self.matplotCanvas()
+            self.popup.destroy()
+            self.displayResult.set(outputString)
+            self.figureAnswer = f
+            self.plotGraph()
+
+    def validateDates(self):
+        start_date_str = self.start.get()
+        end_date_str = self.end.get()
+
+        start_date_matches = list(datefinder.find_dates(start_date_str))
+        end_date_matches = list(datefinder.find_dates(end_date_str))
+
+        if len(start_date_matches) < 1 or len(end_date_matches) < 1:
+            self.invalidDateError()
+            return False
+
+        start_date = start_date_matches[0]
+        end_date = end_date_matches[0]
+
+        if end_date < start_date + timedelta(days=31):
+            self.apartDateError()
+            return False
+
+        self.input['start'] = start_date
+        self.input['end'] = end_date
+
+        return True
+
+
+    def validateAssets(self):
+        proper_inputs = []
+        for userinput in self.userInput:
+            input = userinput.get()
+            if input.strip() is not "":
+                proper_inputs.append(input)
+        if len(proper_inputs) < 1:
+            self.insufficientTickerInputError()
+            return False
+        data_fetch_response = extractData(proper_inputs, self.input['start'], self.input['end'])
+        if type(data_fetch_response) == str:
+            self.invalidTickerError(data_fetch_response)
+            return False
+
+        self.input['df'] = data_fetch_response
+        return True
+
     def assistInput(self):
         assets = ['ACN', 'DIS', 'COST', 'INTC', 'JPM', 'V', 'XOM', 'JNJ', 'BSX', 'CPB']
         for i, ch in enumerate(assets):
@@ -129,57 +179,6 @@ class Root(Tk):
         self.calculate_button.grid(row=3, column=1, columnspan=2)
 
         self.headerFrame.place(x=0, y=0, relheight=2 / 16, relwidth=0.33)
-
-    def calculateResults(self):
-        # Input validation
-        if self.validateDates() and self.validateAssets():
-            f, outputString = self.matplotCanvas()
-            self.popup.destroy()
-            self.displayResult.set(outputString)
-            self.figureAnswer = f
-            self.plotGraph()
-
-    def validateDates(self):
-        start_date_str = self.start.get()
-        end_date_str = self.end.get()
-
-        start_date_matches = list(datefinder.find_dates(start_date_str))
-        end_date_matches = list(datefinder.find_dates(end_date_str))
-
-        if len(start_date_matches) < 1 or len(end_date_matches) < 1:
-            self.invalidDateError()
-            return False
-
-        start_date = start_date_matches[0]
-        end_date = end_date_matches[0]
-
-        if end_date < start_date + timedelta(days=31):
-            self.apartDateError()
-            return False
-
-        self.input['start'] = start_date
-        self.input['end'] = end_date
-
-        return True
-
-
-    def validateAssets(self):
-        proper_inputs = []
-        for userinput in self.userInput:
-            input = userinput.get()
-            if input.strip() is not "":
-                proper_inputs.append(input)
-        if len(proper_inputs) < 1:
-            self.insufficientTickerInputError()
-            return False
-        data_fetch_response = extractData(proper_inputs, self.input['start'], self.input['end'])
-        if type(data_fetch_response) == str:
-            self.invalidTickerError(data_fetch_response)
-            return False
-
-        self.input['df'] = data_fetch_response
-        return True
-
 
     def initDisplayFrame(self):
         self.displayResult = StringVar()
@@ -249,27 +248,6 @@ class Root(Tk):
         Label(self.popup, text="Optimizing Portfolio Please Wait...").pack(expand=True, fill=BOTH)
         self.progress_bar = ttk.Progressbar(self.popup, orient='horizontal', length=286, mode="determinate")
         self.progress_bar.pack(expand=True, fill=BOTH)
-
-    # def createMenus(self):
-    #     menubar = Menu(self)
-    #     self.config(menu=menubar)
-    #
-    #     file_menu = Menu(menubar, tearoff=0)
-    #     menubar.add_cascade(label="File", menu=file_menu)
-    #
-    #     # file_menu.add_command(label="New")
-    #     # file_menu.add_command(label="Save")
-    #     # file_menu.add_separator()
-    #     file_menu.add_command(label="Exit", command=self.closeWindow)
-    #
-    #     help_menu = Menu(menubar, tearoff=0)
-    #     menubar.add_cascade(label="Help", menu=help_menu)
-    #     help_menu.add_command(label="About Us")
-    #
-    # def closeWindow(self):
-    #     self.quit()
-    #     self.destroy()
-    #     exit()
 
 
 root = Root()
