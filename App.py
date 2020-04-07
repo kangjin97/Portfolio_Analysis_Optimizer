@@ -5,10 +5,6 @@ import datefinder
 from datetime import timedelta
 from matplotlib.backends._backend_tk import NavigationToolbar2Tk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-# import numpy as np
-# import matplotlib.pyplot as plt
-# import pandas_datareader.data as web
-# import pandas as pd
 from Final_Calculation import *
 
 
@@ -32,45 +28,117 @@ class Root(Tk):
         # Positions the window in the center of the page.
         self.geometry("+{}+{}".format(self.positionRight, self.positionDown))
 
-
         self.userInput = []
-        self.input ={}
+        self.input = {}
 
-
-        # self.createWidget()
         self.initUI()
         self.assistInput()
-        # self.createMenus()
 
+    def assistInput(self):
+        assets = ['ACN', 'DIS', 'COST', 'INTC', 'JPM', 'V', 'XOM', 'JNJ', 'BSX', 'CPB']
+        for i, ch in enumerate(assets):
+            self.userInput[i].set(ch)
 
-    def matplotCanvas(self):
+    def initUI(self):
+        self.initHeaderFrame()
+        self.initInputFrame()
+        self.initDisplayFrame()
+        self.initCanvasFrame()
 
-        self.run_progressBar()
+    def initHeaderFrame(self):
+        self.start = StringVar()
+        self.end = StringVar()
 
-        main_df = pd.DataFrame(self.input['df'])
+        self.headerFrame = Frame(self, bg="#5FDBDC")
+        Label(self.headerFrame, text='Portfolio Assets', bg="#5FDBDC").grid(row=0, columnspan=4, ipadx=146)
+        Label(self.headerFrame, text='Start-Date: ', bg="#5FDBDC").grid(row=1, column=0)
+        self.startDate = ttk.Entry(self.headerFrame, width=15, textvariable=self.start)
+        self.startDate.grid(row=1, column=1)
+        Label(self.headerFrame, text='End-Date: ', bg="#5FDBDC").grid(row=1, column=2)
+        self.endDate = ttk.Entry(self.headerFrame, width=15, textvariable=self.end)
+        self.endDate.grid(row=1, column=3, sticky=E)
+        ttk.Separator(self.headerFrame).grid(row=2, sticky=E + W, columnspan=4, pady=7)
 
-        # Data cleaning
-        to_impute = main_df.columns[main_df.isna().any()].tolist()
+        self.photo = PhotoImage(file=r'dolar.png')
+        self.photo = self.photo.subsample(17, 17)
+        self.calculate_button = ttk.Button(self.headerFrame, text="Optimize Portfolio",
+                                           width=20, image=self.photo, compound=LEFT, command=self.calculateResults)
+        self.calculate_button.grid(row=3, column=1, columnspan=2)
 
-        for col in to_impute:
-            main_df = impute(main_df, col, "mean")
+        self.headerFrame.place(x=0, y=0, relheight=2 / 16, relwidth=0.33)
 
-        # Get monthly percentage change of assets
-        main_df = main_df.pct_change().dropna()
+    def initInputFrame(self):
+        self.inputFrame = Frame(self, relief=GROOVE)
+        self.inputFrame.place(x=0, y=100, relheight=8 / 16, relwidth=0.33)
+        self.inputCanvas = Canvas(self.inputFrame, bg="#5FDBDC")
+        self.innerInputFrame = ttk.Frame(self.inputCanvas)
+        self.myscrollbar = ttk.Scrollbar(self.inputFrame, orient="vertical", command=self.inputCanvas.yview)
+        self.inputCanvas.configure(yscrollcommand=self.myscrollbar.set)
+        self.myscrollbar.pack(side="right", fill="y")
+        self.inputCanvas.pack(side="left", fill="y")
+        self.inputCanvas.create_window((0, 0), window=self.innerInputFrame, anchor=NW)
+        self.innerInputFrame.bind("<Configure>", self.myfunction)
+        self.createInputWidets()
 
-        # Get mean returns and covariance matrix of assets within the given time frame
-        mean_returns = main_df.mean()
-        cov_matrix = main_df.cov()
+    # Define scrolling region for inputCanvas so it uses innerInputFrame
+    def myfunction(self, event):
+        self.inputCanvas.configure(scrollregion=self.inputCanvas.bbox("all"), width=400, height=550)
 
-        # Calculate efficient frontier based on risk-free rate and number of portfolios
-        num_portfolios = 20000
+    def createInputWidets(self):
+        global inputCount
+        inputCount = 0
+        for _ in range(20):
+            self.userInput.append(StringVar())
+            Label(self.innerInputFrame, bg="#5FDBDC").grid(row=inputCount*2, columnspan=3, sticky=EW)
+            Label(self.innerInputFrame, text=str(inputCount + 1), bg="#5FDBDC", width=12, anchor=W).grid(row=inputCount*2 + 1, column=0)
+            entry = Entry(self.innerInputFrame, width=30, textvariable=self.userInput[inputCount])
+            entry.grid(row=inputCount*2 + 1, column=1)
+            Label(self.innerInputFrame, width=20, bg="#5FDBDC").grid(row=inputCount*2 + 1, column=2, sticky=E)
 
-        # Progress Bar
-        self.progress_bar["maximum"] = num_portfolios
-        risk_free_rate = 0.0152
+            inputCount += 1
 
+        Label(self.innerInputFrame, bg="#5FDBDC").grid(row=inputCount * 2, columnspan=3, sticky=EW)
 
-        return simulate_ef_random(mean_returns, cov_matrix, num_portfolios, risk_free_rate, self.progress_bar)
+    def initDisplayFrame(self):
+        self.displayResult = StringVar()
+        self.displayResult.set("Currently no results to display")
+
+        self.displayFrame = ttk.Frame(self)
+        self.displayFrame.place(x=0, y=522, relheight=6 / 16, relwidth=0.33)
+        self.displayLabel = Label(self.displayFrame, textvariable=self.displayResult)
+        self.displayLabel.pack(fill=BOTH, expand=True)
+        self.displayLabel.configure(bg="#5FDBDC", fg="#455757", borderwidth=2, relief="ridge")
+
+    def initCanvasFrame(self):
+        self.canvasFrame = Frame(self, bg="#558F8F")
+        self.canvasFrame.place(x=400, y=0, relheight=1, relwidth=0.665)
+        self.introductionCanvas = Canvas(self.canvasFrame, bg="white")
+        self.introductionCanvas.pack(expand=YES, fill=BOTH)
+        filename = PhotoImage(file='introductionCanvas.PNG')
+        self.filename = filename
+        self.introductionCanvas.create_image(400, 400, anchor='center', image=self.filename)
+
+    def createCanvasImage(self):
+        canvas = Canvas(bg="white", height=250, width=300)
+        canvas.pack(expand=YES, fill=BOTH)
+        filename = PhotoImage(file='profits.gif')
+        self.filename = filename
+        canvas.create_image(50, 50, anchor=NW, image=self.filename)
+
+    def plotGraph(self):
+        is_first_time = True
+        if hasattr(self, 'matplotcanvas'):
+            self.matplotcanvas.get_tk_widget().pack_forget()
+            is_first_time = False
+        else:
+            self.introductionCanvas.delete("all")
+        f = self.figureAnswer
+        self.matplotcanvas = FigureCanvasTkAgg(f, self.introductionCanvas)
+        self.matplotcanvas.draw()
+        self.matplotcanvas.get_tk_widget().pack(side=BOTTOM, fill=BOTH, expand=True)
+        if is_first_time == True:
+            toolbar = NavigationToolbar2Tk(self.matplotcanvas, self)
+            self.matplotcanvas.tkcanvas.pack(side=TOP, fill=BOTH, expand=True)
 
     def calculateResults(self):
         # Input validation
@@ -122,110 +190,34 @@ class Root(Tk):
         self.input['df'] = data_fetch_response
         return True
 
-    def assistInput(self):
-        assets = ['ACN', 'DIS', 'COST', 'INTC', 'JPM', 'V', 'XOM', 'JNJ', 'BSX', 'CPB']
-        for i, ch in enumerate(assets):
-            self.userInput[i].set(ch)
+    def matplotCanvas(self):
 
-    def createInputWidets(self):
-        global inputCount
-        inputCount = 0
-        for _ in range(20):
-            self.userInput.append(StringVar())
-            Label(self.innerInputFrame, bg="#5FDBDC").grid(row=inputCount*2, columnspan=3, sticky=EW)
-            Label(self.innerInputFrame, text=str(inputCount + 1), bg="#5FDBDC", width=12, anchor=W).grid(row=inputCount*2 + 1, column=0)
-            entry = Entry(self.innerInputFrame, width=30, textvariable=self.userInput[inputCount])
-            entry.grid(row=inputCount*2 + 1, column=1)
-            Label(self.innerInputFrame, width=20, bg="#5FDBDC").grid(row=inputCount*2 + 1, column=2, sticky=E)
+        self.run_progressBar()
 
-            inputCount += 1
+        main_df = pd.DataFrame(self.input['df'])
 
-        Label(self.innerInputFrame, bg="#5FDBDC").grid(row=inputCount * 2, columnspan=3, sticky=EW)
+        # Data cleaning
+        to_impute = main_df.columns[main_df.isna().any()].tolist()
 
-    # Define scrolling region for inputCanvas so it uses innerInputFrame
-    def myfunction(self, event):
-        self.inputCanvas.configure(scrollregion=self.inputCanvas.bbox("all"), width=400, height=550)
+        for col in to_impute:
+            main_df = impute(main_df, col, "mean")
 
-    def initInputFrame(self):
-        self.inputFrame = Frame(self, relief=GROOVE)
-        self.inputFrame.place(x=0, y=100, relheight=8 / 16, relwidth=0.33)
-        self.inputCanvas = Canvas(self.inputFrame, bg="#5FDBDC")
-        self.innerInputFrame = ttk.Frame(self.inputCanvas)
-        self.myscrollbar = ttk.Scrollbar(self.inputFrame, orient="vertical", command=self.inputCanvas.yview)
-        self.inputCanvas.configure(yscrollcommand=self.myscrollbar.set)
-        self.myscrollbar.pack(side="right", fill="y")
-        self.inputCanvas.pack(side="left", fill="y")
-        self.inputCanvas.create_window((0, 0), window=self.innerInputFrame, anchor=NW)
-        self.innerInputFrame.bind("<Configure>", self.myfunction)
-        self.createInputWidets()
+        # Get monthly percentage change of assets
+        main_df = main_df.pct_change().dropna()
 
-    def initHeaderFrame(self):
-        self.start = StringVar()
-        self.end = StringVar()
+        # Get mean returns and covariance matrix of assets within the given time frame
+        mean_returns = main_df.mean()
+        cov_matrix = main_df.cov()
 
-        self.headerFrame = Frame(self, bg="#5FDBDC")
-        Label(self.headerFrame, text='Portfolio Assets', bg="#5FDBDC").grid(row=0, columnspan=4, ipadx=146)
-        Label(self.headerFrame, text='Start-Date: ', bg="#5FDBDC").grid(row=1, column=0)
-        self.startDate = ttk.Entry(self.headerFrame, width=15, textvariable=self.start)
-        self.startDate.grid(row=1, column=1)
-        Label(self.headerFrame, text='End-Date: ', bg="#5FDBDC").grid(row=1, column=2)
-        self.endDate = ttk.Entry(self.headerFrame, width=15, textvariable=self.end)
-        self.endDate.grid(row=1, column=3, sticky=E)
-        ttk.Separator(self.headerFrame).grid(row=2, sticky=E + W, columnspan=4, pady=7)
+        # Calculate efficient frontier based on risk-free rate and number of portfolios
+        num_portfolios = 20000
 
-        self.photo = PhotoImage(file=r'dolar.png')
-        self.photo = self.photo.subsample(17, 17)
-        self.calculate_button = ttk.Button(self.headerFrame, text="Optimize Portfolio", width=20, image=self.photo, compound=LEFT, command=self.calculateResults)
-        self.calculate_button.grid(row=3, column=1, columnspan=2)
+        # Progress Bar
+        self.progress_bar["maximum"] = num_portfolios
+        risk_free_rate = 0.0152
 
-        self.headerFrame.place(x=0, y=0, relheight=2 / 16, relwidth=0.33)
 
-    def initDisplayFrame(self):
-        self.displayResult = StringVar()
-        self.displayResult.set("Currently no results to display")
-
-        self.displayFrame = ttk.Frame(self)
-        self.displayFrame.place(x=0, y=522, relheight=6 / 16, relwidth=0.33)
-        self.displayLabel = Label(self.displayFrame, textvariable=self.displayResult)
-        self.displayLabel.pack(fill=BOTH, expand=True)
-        self.displayLabel.configure(bg="#5FDBDC", fg="#455757", borderwidth=2, relief="ridge")
-
-    def initCanvasFrame(self):
-        self.canvasFrame = Frame(self, bg="#558F8F")
-        self.canvasFrame.place(x=400, y=0, relheight=1, relwidth=0.665)
-        self.introductionCanvas = Canvas(self.canvasFrame, bg="white")
-        self.introductionCanvas.pack(expand=YES, fill=BOTH)
-        filename = PhotoImage(file='introductionCanvas.PNG')
-        self.filename = filename
-        self.introductionCanvas.create_image(400, 400, anchor='center', image=self.filename)
-
-    def createCanvasImage(self):
-        canvas = Canvas(bg="white", height=250, width=300)
-        canvas.pack(expand=YES, fill=BOTH)
-        filename = PhotoImage(file='profits.gif')
-        self.filename = filename
-        canvas.create_image(50, 50, anchor=NW, image=self.filename)
-
-    def plotGraph(self):
-        is_first_time = True
-        if hasattr(self, 'matplotcanvas'):
-            self.matplotcanvas.get_tk_widget().pack_forget()
-            is_first_time = False
-        else:
-            self.introductionCanvas.delete("all")
-        f = self.figureAnswer
-        self.matplotcanvas = FigureCanvasTkAgg(f, self.introductionCanvas)
-        self.matplotcanvas.draw()
-        self.matplotcanvas.get_tk_widget().pack(side=BOTTOM, fill=BOTH, expand=True)
-        if is_first_time == True:
-            toolbar = NavigationToolbar2Tk(self.matplotcanvas, self)
-            self.matplotcanvas.tkcanvas.pack(side=TOP, fill=BOTH, expand=True)
-
-    def initUI(self):
-        self.initHeaderFrame()
-        self.initInputFrame()
-        self.initDisplayFrame()
-        self.initCanvasFrame()
+        return simulate_ef_random(mean_returns, cov_matrix, num_portfolios, risk_free_rate, self.progress_bar)
 
 
     # Error Messages
