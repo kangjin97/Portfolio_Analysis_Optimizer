@@ -2,7 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas_datareader.data as web
 import pandas as pd
-# from datetime import datetime, timedelta
 
 def extractData(stocks, start, end):
     global progress
